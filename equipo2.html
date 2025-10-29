@@ -464,8 +464,8 @@
 
       async function initializeGame() {
         const initialPieces = [
-          { piece_index: 0, left: 610, top: 300, angle: 0 },
-          { piece_index: 1, left: 400, top: 300, angle: 180 }
+          { piece_index: 1, left: 200, top: 300, angle: 180 },
+          { piece_index: 0, left: 410, top: 300, angle: 0 }
         ];
 
         await supabase
@@ -698,8 +698,8 @@
         
         // Resetear a las 2 piezas iniciales: invertidas y más juntas
         const initialPieces = [
-          { piece_index: 0, left: 610, top: 300, angle: 0 },
-          { piece_index: 1, left: 400, top: 300, angle: 180 }
+          { piece_index: 1, left: 200, top: 300, angle: 180 },
+          { piece_index: 0, left: 410, top: 300, angle: 0 }
         ];
         
         currentPieceCount = 2;
