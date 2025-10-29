@@ -465,7 +465,7 @@
       async function initializeGame() {
         const initialPieces = [
           { piece_index: 0, left: 200, top: 300, angle: 90 },
-          { piece_index: 1, left: 500, top: 300, angle: 90 }
+          { piece_index: 1, left: 500, top: 300, angle: -90 }
         ];
 
         await supabase
@@ -696,10 +696,10 @@
         
         console.log('Reset clicked - resetting to initial 2 pieces');
         
-        // Resetear a las 2 piezas iniciales rotadas 90 grados
+        // Resetear a las 2 piezas iniciales: verticales e invertidas
         const initialPieces = [
           { piece_index: 0, left: 200, top: 300, angle: 90 },
-          { piece_index: 1, left: 450, top: 300, angle: 90 }
+          { piece_index: 1, left: 450, top: 300, angle: -90 }
         ];
         
         currentPieceCount = 2;
