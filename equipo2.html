@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paralelogramos – EQUIPO 2</title>
+  
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --grid: rgba(0, 0, 0, .05);
+      --piece: #b8427e;
+      --stroke: #8b2f5e;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal {
+      background: white;
+      padding: 32px;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 400px;
+      width: 90%;
+    }
+
+    .modal h2 { margin: 0 0 8px 0; font-size: 24px; color: #000; }
+    .modal p { margin: 0 0 24px 0; color: #666; font-size: 14px; }
+    
+    .modal input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e6e6e6;
+      border-radius: 8px;
+      font-size: 16px;
+      margin-bottom: 16px;
+      box-sizing: border-box;
+    }
+
+    .modal input:focus { outline: none; border-color: var(--piece); }
+
+    .modal button {
+      width: 100%;
+      padding: 12px;
+      background: var(--piece);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .modal button:hover { background: var(--stroke); }
+    .modal button:disabled { background: #ccc; cursor: not-allowed; }
+
+    /* TABLERO */
+    .board {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 40px 40px;
+      background-position: -1px -1px;
+    }
+
+    /* TOOLBAR */
+    .main-title {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 18px;
+      font-weight: 700;
+      color: #000;
+      letter-spacing: 1px;
+      z-index: 11;
+    }
+
+    .toolbar {
+      position: fixed;
+      top: 55px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+      background: #fff;
+      border: 1px solid #e6e6e6;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, .06);
+      padding: 12px 20px;
+      font-size: 14px;
+      z-index: 10;
+      max-width: 90%;
+    }
+
+    .instructions {
+      text-align: center;
+      line-height: 1.5;
+      color: #333;
+      font-weight: 700;
+      font-size: 16px;
+      text-transform: uppercase;
+    }
+
+    .msg {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #666;
+    }
+
+    .status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4caf50;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .badge {
+      background: #f0f0f0;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #666;
+      font-weight: 600;
+    }
+
+    /* BOTONES ARRIBA IZQUIERDA */
+    .top-left-controls {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .top-left-controls button {
+      padding: 10px 20px;
+      background: var(--piece);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      min-width: 150px;
+    }
+
+    .top-left-controls button:hover { 
+      background: var(--stroke); 
+    }
+    
+    .top-left-controls button:disabled { 
+      background: #ccc; 
+      cursor: not-allowed; 
+    }
+
+    .reset-btn {
+      background: #ff9800 !important;
+    }
+
+    .reset-btn:hover {
+      background: #f57c00 !important;
+    }
+
+    /* LABEL EQUIPO */
+    .label {
+      position: fixed;
+      left: 16px;
+      bottom: 16px;
+      background: #000;
+      color: #fff;
+      font-weight: 700;
+      font-size: 18px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, .2);
+      letter-spacing: 1px;
+      z-index: 10;
+    }
+
+    /* USERS PANEL */
+    .users-panel {
+      position: fixed;
+      right: 16px;
+      top: 16px;
+      background: #fff;
+      border: 1px solid #e6e6e6;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .1);
+      min-width: 200px;
+      max-width: 250px;
+      z-index: 10;
+    }
+
+    .users-panel h3 {
+      font-size: 12px;
+      font-weight: 700;
+      color: #666;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .user-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      margin-bottom: 4px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .user-item.me {
+      background: #e3f2fd;
+    }
+
+    .user-dot {
+      width: 8px;
+      height: 8px;
+      background: #4caf50;
+      border-radius: 50%;
+    }
+
+    /* LEAVE BUTTON */
+    .btn-leave {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      padding: 10px 20px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+      z-index: 10;
+    }
+
+    .btn-leave:hover {
+      background: #c82333;
+    }
+
+    /* PIEZAS */
+    .piece {
+      position: absolute;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .piece:active {
+      cursor: grabbing;
+    }
+
+    .piece svg {
+      display: block;
+      pointer-events: none;
+    }
+
+    polygon, rect {
+      fill: var(--piece);
+      stroke: var(--stroke);
+      stroke-width: 2;
+    }
+
+    .handle-rotate {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: -8px;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--stroke);
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .1);
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .handle-rotate:active {
+      cursor: grabbing;
+    }
+  </style>
+</head>
+<body>
+  <!-- Modal -->
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <h2>Ejercicio Paralelogramos</h2>
+      <p>Introduce tu nombre para unirte al <strong>EQUIPO 2</strong></p>
+      <input type="text" id="nameInput" placeholder="Tu nombre" maxlength="30" autofocus>
+      <button id="joinButton" disabled>Unirse</button>
+    </div>
+  </div>
+
+  <!-- Interfaz -->
+  <!-- Botones arriba izquierda (solo Angel Caro) -->
+  <div id="topLeftControls" class="top-left-controls">
+    <button id="nextPieceBtn">Pieza siguiente →</button>
+    <button id="resetBtn" class="reset-btn">Reset</button>
+  </div>
+
+  <div id="board" class="board"></div>
+  
+  <div class="main-title">EJERCICIO PARALELOGRAMOS</div>
+  
+  <div class="toolbar">
+    <span class="instructions" id="instructionText">Intentad construir un paralelogramo con las dos piezas.<br>Puedes mover las piezas con el ratón. Las puedes rotar con el circulito adyacente.</span>
+    <span class="msg">
+      <span class="status"></span>
+      <b>Modo colaborativo.</b> Todos pueden mover y rotar las piezas en tiempo real.
+    </span>
+    <span class="badge"><span id="userCount">0</span> usuarios conectados</span>
+  </div>
+
+  <div class="users-panel">
+    <h3>USUARIOS ACTIVOS</h3>
+    <div id="usersList"></div>
+  </div>
+
+  <button id="btnLeave" class="btn-leave">Abandonar sala</button>
+
+  <div class="label">EQUIPO 2</div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // SUPABASE CONFIG
+      const SUPABASE_URL = 'https://joumhjhfqlnwjvwbatfe.supabase.co';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvdW1oamhmcWxud2p2d2JhdGZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2ODU0NDQsImV4cCI6MjA3NzI2MTQ0NH0.Gq4apd5d1Fq5vo0LAw1vCzCIeBDfTRq4rKs_V-pGYRU';
+      
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      // PIEZAS
+      const allPieces = [
+        { id: 0, svg: '<svg width="150" height="220" viewBox="0 0 150 220"><polygon points="0,0 149.4,0 55.8,216 0,216"/></svg>', w: 150, h: 220 },
+        { id: 1, svg: '<svg width="150" height="220" viewBox="0 0 150 220"><polygon points="0,0 149.4,0 55.8,216 0,216"/></svg>', w: 150, h: 220 },
+        { id: 2, svg: '<svg width="100" height="220" viewBox="0 0 100 220"><rect x="0" y="0" width="96" height="216"/></svg>', w: 100, h: 220 },
+        { id: 3, svg: '<svg width="170" height="75" viewBox="0 0 170 75"><polygon points="0,72 135,72 166.2,0 0,0"/></svg>', w: 170, h: 75 },
+        { id: 4, svg: '<svg width="170" height="75" viewBox="0 0 170 75"><polygon points="0,72 135,72 166.2,0 0,0"/></svg>', w: 170, h: 75 },
+        { id: 5, svg: '<svg width="335" height="75" viewBox="0 0 335 75"><polygon points="0,72 301.2,72 332.4,0 31.2,0"/></svg>', w: 335, h: 75 }
+      ];
+
+      const numberWords = ['', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis'];
+
+      const SESSION_ID = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      let MY_USER_NAME = '';
+      let isAngelCaro = false;
+      let currentPieceCount = 2;
+      
+      const board = document.getElementById('board');
+      const modalOverlay = document.getElementById('modalOverlay');
+      const nameInput = document.getElementById('nameInput');
+      const joinButton = document.getElementById('joinButton');
+      const userCount = document.getElementById('userCount');
+      const usersList = document.getElementById('usersList');
+      const instructionText = document.getElementById('instructionText');
+      const nextPieceBtn = document.getElementById('nextPieceBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const topLeftControls = document.getElementById('topLeftControls');
+      const btnLeave = document.getElementById('btnLeave');
+
+      let isUpdatingFromServer = false;
+      let pieces = [];
+
+      // MODAL
+      nameInput.addEventListener('input', () => {
+        joinButton.disabled = nameInput.value.trim().length < 2;
+      });
+
+      nameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !joinButton.disabled) {
+          joinButton.click();
+        }
+      });
+
+      joinButton.addEventListener('click', async () => {
+        MY_USER_NAME = nameInput.value.trim();
+        isAngelCaro = (MY_USER_NAME.toLowerCase() === 'angel caro' || MY_USER_NAME.toLowerCase() === 'angelcaro');
+        modalOverlay.style.display = 'none';
+        await init();
+      });
+
+      // INIT
+      async function init() {
+        if (isAngelCaro) {
+          topLeftControls.style.display = 'flex';
+        }
+
+        await updatePresence();
+        await loadGameState();
+
+        setInterval(updatePresence, 15000);
+        setInterval(updateOnlineCount, 5000);
+        subscribeToGameState();
+      }
+
+      // GAME STATE
+      async function loadGameState() {
+        try {
+          const { data, error } = await supabase
+            .from('exercise_state')
+            .select('*')
+            .eq('id', 'equipo2_paralelepipedos')
+            .single();
+
+          if (error && error.code !== 'PGRST116') throw error;
+
+          if (!data) {
+            await initializeGame();
+          } else {
+            currentPieceCount = data.piece_count || 2;
+            const piecesData = data.placed_pieces || [];
+            renderPieces(piecesData);
+            updateUI();
+          }
+        } catch (error) {
+          console.error('Error loading game:', error);
+          await initializeGame();
+        }
+      }
+
+      async function initializeGame() {
+        const initialPieces = [
+          { piece_index: 1, left: 250, top: 300, angle: 0 },
+          { piece_index: 0, left: 400, top: 300, angle: 180 }
+        ];
+
+        await supabase
+          .from('exercise_state')
+          .upsert({
+            id: 'equipo2_paralelepipedos',
+            piece_count: 2,
+            placed_pieces: initialPieces,
+            updated_at: new Date().toISOString()
+          });
+
+        renderPieces(initialPieces);
+      }
+
+      function renderPieces(piecesData) {
+        board.querySelectorAll('.piece').forEach(el => el.remove());
+        pieces = [];
+        piecesData.forEach(data => createPiece(data.piece_index, data));
+      }
+
+      function createPiece(index, state) {
+        const pieceData = allPieces[index];
+        const p = document.createElement('div');
+        p.className = 'piece';
+        p.dataset.index = index;
+        p.dataset.angle = state.angle || 0;
+        p.style.left = state.left + 'px';
+        p.style.top = state.top + 'px';
+        p.style.transform = `rotate(${state.angle}deg)`;
+        p.innerHTML = pieceData.svg;
+
+        const h = document.createElement('div');
+        h.className = 'handle-rotate';
+        p.appendChild(h);
+
+        board.appendChild(p);
+
+        let dragging = false;
+        let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+        p.addEventListener('pointerdown', (ev) => {
+          if (ev.target === h) return;
+          dragging = true;
+          p.setPointerCapture(ev.pointerId);
+          startX = ev.clientX;
+          startY = ev.clientY;
+          startLeft = parseFloat(p.style.left);
+          startTop = parseFloat(p.style.top);
+        });
+
+        p.addEventListener('pointermove', (ev) => {
+          if (!dragging) return;
+          const dx = ev.clientX - startX;
+          const dy = ev.clientY - startY;
+          p.style.left = (startLeft + dx) + 'px';
+          p.style.top = (startTop + dy) + 'px';
+        });
+
+        p.addEventListener('pointerup', () => {
+          if (dragging) {
+            dragging = false;
+            syncPiece(index, p);
+          }
+        });
+
+        let rotating = false;
+        let baseAngle = 0;
+        let startAngle = 0;
+
+        const angleFromPointer = (ev) => {
+          const rect = p.getBoundingClientRect();
+          const cx = rect.left + rect.width / 2;
+          const cy = rect.top + rect.height / 2;
+          return Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI;
+        };
+
+        h.addEventListener('pointerdown', (ev) => {
+          ev.stopPropagation();
+          rotating = true;
+          h.setPointerCapture(ev.pointerId);
+          baseAngle = parseFloat(p.dataset.angle);
+          startAngle = angleFromPointer(ev);
+        });
+
+        h.addEventListener('pointermove', (ev) => {
+          if (!rotating) return;
+          const current = angleFromPointer(ev);
+          const diff = current - startAngle;
+          const newAng = baseAngle + diff;
+          p.dataset.angle = newAng;
+          p.style.transform = `rotate(${newAng}deg)`;
+        });
+
+        h.addEventListener('pointerup', () => {
+          if (rotating) {
+            rotating = false;
+            syncPiece(index, p);
+          }
+        });
+
+        pieces.push(p);
+      }
+
+      async function syncPiece(index, pieceEl) {
+        if (isUpdatingFromServer) return;
+
+        const allPiecesData = pieces.map(p => ({
+          piece_index: parseInt(p.dataset.index),
+          left: parseFloat(p.style.left),
+          top: parseFloat(p.style.top),
+          angle: parseFloat(p.dataset.angle)
+        }));
+
+        await supabase
+          .from('exercise_state')
+          .upsert({
+            id: 'equipo2_paralelepipedos',
+            piece_count: currentPieceCount,
+            placed_pieces: allPiecesData,
+            updated_at: new Date().toISOString()
+          });
+      }
+
+      function subscribeToGameState() {
+        supabase
+          .channel('exercise_equipo2')
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'exercise_state',
+            filter: 'id=eq.equipo2_paralelepipedos'
+          }, (payload) => {
+            if (payload.new) {
+              isUpdatingFromServer = true;
+              currentPieceCount = payload.new.piece_count || 2;
+              const piecesData = payload.new.placed_pieces || [];
+              updatePiecesFromServer(piecesData);
+              updateUI();
+              setTimeout(() => { isUpdatingFromServer = false; }, 100);
+            }
+          })
+          .subscribe();
+      }
+
+      function updatePiecesFromServer(piecesData) {
+        // Eliminar piezas que ya no están en el nuevo estado
+        const newIndices = piecesData.map(d => d.piece_index);
+        pieces.forEach(p => {
+          const index = parseInt(p.dataset.index);
+          if (!newIndices.includes(index)) {
+            p.remove();
+          }
+        });
+        pieces = pieces.filter(p => newIndices.includes(parseInt(p.dataset.index)));
+        
+        // Actualizar o crear piezas
+        piecesData.forEach(data => {
+          const existing = pieces.find(p => parseInt(p.dataset.index) === data.piece_index);
+          if (existing) {
+            existing.style.left = data.left + 'px';
+            existing.style.top = data.top + 'px';
+            existing.dataset.angle = data.angle;
+            existing.style.transform = `rotate(${data.angle}deg)`;
+          } else {
+            createPiece(data.piece_index, data);
+          }
+        });
+      }
+
+      function updateUI() {
+        const numWord = currentPieceCount === 2 ? 'las dos' : `las ${numberWords[currentPieceCount]}`;
+        instructionText.textContent = `Intentad construir un paralelogramo con ${numWord} piezas`;
+        
+        if (isAngelCaro) {
+          nextPieceBtn.disabled = currentPieceCount >= 6;
+          nextPieceBtn.textContent = currentPieceCount >= 6 ? 'Todas añadidas' : 'Pieza siguiente →';
+        }
+      }
+
+      nextPieceBtn.addEventListener('click', async () => {
+        console.log('Button clicked!', 'isAngelCaro:', isAngelCaro, 'currentPieceCount:', currentPieceCount);
+        
+        if (!isAngelCaro || currentPieceCount >= 6) {
+          console.log('Blocked - not Angel Caro or max pieces reached');
+          return;
+        }
+        
+        currentPieceCount++;
+        console.log('Adding piece', currentPieceCount);
+        
+        const newPieceData = {
+          piece_index: currentPieceCount - 1,
+          left: 200 + (currentPieceCount - 1) * 250,
+          top: 300,
+          angle: 0
+        };
+
+        const currentPiecesData = pieces.map(p => ({
+          piece_index: parseInt(p.dataset.index),
+          left: parseFloat(p.style.left),
+          top: parseFloat(p.style.top),
+          angle: parseFloat(p.dataset.angle)
+        }));
+
+        currentPiecesData.push(newPieceData);
+        
+        console.log('Saving to DB:', currentPiecesData);
+
+        const { data, error } = await supabase
+          .from('exercise_state')
+          .upsert({
+            id: 'equipo2_paralelepipedos',
+            piece_count: currentPieceCount,
+            placed_pieces: currentPiecesData,
+            updated_at: new Date().toISOString()
+          });
+        
+        if (error) {
+          console.error('ERROR saving:', error);
+        } else {
+          console.log('Saved successfully!');
+        }
+      });
+
+      // Reset button - Vuelve al estado inicial con solo 2 piezas
+      resetBtn.addEventListener('click', async () => {
+        if (!isAngelCaro) return;
+        
+        console.log('Reset clicked - resetting to initial 2 pieces');
+        
+        // Resetear a las 2 piezas iniciales: invertidas y más juntas
+        const initialPieces = [
+          { piece_index: 1, left: 250, top: 300, angle: 0 },
+          { piece_index: 0, left: 400, top: 300, angle: 180 }
+        ];
+        
+        currentPieceCount = 2;
+        
+        const { data, error } = await supabase
+          .from('exercise_state')
+          .upsert({
+            id: 'equipo2_paralelepipedos',
+            piece_count: 2,
+            placed_pieces: initialPieces,
+            updated_at: new Date().toISOString()
+          });
+        
+        if (error) {
+          console.error('ERROR resetting:', error);
+        } else {
+          console.log('Reset successful!');
+        }
+      });
+
+      // PRESENCE
+      async function updatePresence() {
+        await supabase.from('exercise_presence').upsert({
+          user_id: SESSION_ID,
+          user_name: MY_USER_NAME,
+          team: 'equipo2',
+          last_seen: new Date().toISOString()
+        });
+      }
+
+      async function updateOnlineCount() {
+        const { data } = await supabase
+          .from('exercise_presence')
+          .select('*')
+          .eq('team', 'equipo2')
+          .gte('last_seen', new Date(Date.now() - 30000).toISOString());
+        
+        const count = data?.length || 0;
+        userCount.textContent = count;
+        
+        // Update users list
+        usersList.innerHTML = '';
+        if (data) {
+          data.forEach(user => {
+            const item = document.createElement('div');
+            item.className = 'user-item' + (user.user_id === SESSION_ID ? ' me' : '');
+            item.innerHTML = `
+              <div class="user-dot"></div>
+              <span>${user.user_name}${user.user_id === SESSION_ID ? ' (tú)' : ''}</span>
+            `;
+            usersList.appendChild(item);
+          });
+        }
+      }
+
+      // Leave button
+      btnLeave.addEventListener('click', async () => {
+        await supabase
+          .from('exercise_presence')
+          .delete()
+          .eq('user_id', SESSION_ID);
+        
+        location.reload();
+      });
+    })();
+  </script>
+</body>
+</html>
