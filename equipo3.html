@@ -389,9 +389,9 @@
         { id: 0, svg: '<svg width="249" height="360" viewBox="0 0 249 360"><polygon points="0,0 249,0 93,360 0,360"/></svg>', w: 249, h: 360 },
         { id: 1, svg: '<svg width="249" height="360" viewBox="0 0 249 360"><polygon points="0,0 249,0 93,360 0,360"/></svg>', w: 249, h: 360 },
         { id: 2, svg: '<svg width="160" height="360" viewBox="0 0 160 360"><rect x="0" y="0" width="160" height="360"/></svg>', w: 160, h: 360 },
-        { id: 3, svg: '<svg width="277" height="120" viewBox="0 0 277 120"><polygon points="0,0 225,0 277,120 0,120"/></svg>', w: 277, h: 120 },
-        { id: 4, svg: '<svg width="277" height="120" viewBox="0 0 277 120"><polygon points="0,0 225,0 277,120 0,120"/></svg>', w: 277, h: 120 },
-        { id: 5, svg: '<svg width="554" height="120" viewBox="0 0 554 120"><polygon points="0,0 502,0 554,120 52,120"/></svg>', w: 554, h: 120 }
+        { id: 3, svg: '<svg width="277" height="120" viewBox="0 0 277 120"><polygon points="52,0 277,0 277,120 0,120"/></svg>', w: 277, h: 120 },
+        { id: 4, svg: '<svg width="277" height="120" viewBox="0 0 277 120"><polygon points="52,0 277,0 277,120 0,120"/></svg>', w: 277, h: 120 },
+        { id: 5, svg: '<svg width="554" height="120" viewBox="0 0 554 120"><polygon points="52,0 554,0 502,120 0,120"/></svg>', w: 554, h: 120 }
       ];
 
       const numberWords = ['', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis'];
@@ -624,6 +624,19 @@
       }
 
       function updatePiecesFromServer(piecesData) {
+        // Remove pieces that are not in the server data
+        pieces.forEach(p => {
+          const pieceIndex = parseInt(p.dataset.index);
+          const stillExists = piecesData.some(data => data.piece_index === pieceIndex);
+          if (!stillExists) {
+            p.remove();
+          }
+        });
+        
+        // Update pieces array
+        pieces = pieces.filter(p => document.body.contains(p));
+        
+        // Update or create pieces from server data
         piecesData.forEach(data => {
           const existing = pieces.find(p => parseInt(p.dataset.index) === data.piece_index);
           if (existing) {
