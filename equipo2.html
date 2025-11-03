@@ -122,9 +122,7 @@
       text-align: center;
       line-height: 1.5;
       color: #333;
-      font-weight: 700;
-      font-size: 16px;
-      text-transform: uppercase;
+      font-weight: 400;
     }
 
     .msg {
@@ -157,8 +155,8 @@
       font-weight: 600;
     }
 
-    /* BOTONES ARRIBA IZQUIERDA */
-    .top-left-controls {
+    /* CONTROL BUTTONS (Angel Caro only) */
+    .control-buttons {
       position: fixed;
       top: 16px;
       left: 16px;
@@ -168,7 +166,8 @@
       z-index: 10;
     }
 
-    .top-left-controls button {
+    .btn-next-piece,
+    .btn-reset {
       padding: 10px 20px;
       background: var(--piece);
       color: white;
@@ -177,25 +176,26 @@
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
+      box-shadow: 0 4px 12px rgba(184, 66, 126, 0.3);
       white-space: nowrap;
-      min-width: 150px;
     }
 
-    .top-left-controls button:hover { 
-      background: var(--stroke); 
-    }
-    
-    .top-left-controls button:disabled { 
-      background: #ccc; 
-      cursor: not-allowed; 
+    .btn-next-piece:hover,
+    .btn-reset:hover {
+      background: var(--stroke);
     }
 
-    .reset-btn {
-      background: #ff9800 !important;
+    .btn-next-piece:disabled {
+      background: #ccc;
+      cursor: not-allowed;
     }
 
-    .reset-btn:hover {
-      background: #f57c00 !important;
+    .btn-reset {
+      background: #ff9800;
+    }
+
+    .btn-reset:hover {
+      background: #f57c00;
     }
 
     /* LABEL EQUIPO */
@@ -259,25 +259,36 @@
       border-radius: 50%;
     }
 
-    /* LEAVE BUTTON */
-    .btn-leave {
-      position: fixed;
-      right: 16px;
-      bottom: 16px;
-      padding: 10px 20px;
-      background: #dc3545;
-      color: white;
+    /* LEAVE AND CLEAR BUTTONS */
+    .btn-leave,
+    .btn-clear-room {
+      width: 100%;
+      padding: 10px;
       border: none;
       border-radius: 8px;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-      z-index: 10;
+      margin-top: 12px;
+    }
+
+    .btn-leave {
+      background: #dc3545;
+      color: white;
     }
 
     .btn-leave:hover {
       background: #c82333;
+    }
+
+    .btn-clear-room {
+      background: #ff9800;
+      color: white;
+      display: none;
+    }
+
+    .btn-clear-room:hover {
+      background: #f57c00;
     }
 
     /* PIEZAS */
@@ -335,13 +346,13 @@
   </div>
 
   <!-- Interfaz -->
-  <!-- Botones arriba izquierda (solo Angel Caro) -->
-  <div id="topLeftControls" class="top-left-controls">
-    <button id="nextPieceBtn">Pieza siguiente →</button>
-    <button id="resetBtn" class="reset-btn">Reset</button>
-  </div>
-
   <div id="board" class="board"></div>
+  
+  <!-- Control buttons (only for Angel Caro) -->
+  <div class="control-buttons" id="controlButtons">
+    <button class="btn-next-piece" id="nextPieceBtn">Pieza siguiente →</button>
+    <button class="btn-reset" id="btnReset">Volver a posición inicial</button>
+  </div>
   
   <div class="main-title">EJERCICIO PARALELOGRAMOS</div>
   
@@ -357,9 +368,9 @@
   <div class="users-panel">
     <h3>USUARIOS ACTIVOS</h3>
     <div id="usersList"></div>
+    <button id="btnLeave" class="btn-leave">Abandonar sala</button>
+    <button id="btnClearRoom" class="btn-clear-room">Vaciar sala</button>
   </div>
-
-  <button id="btnLeave" class="btn-leave">Abandonar sala</button>
 
   <div class="label">EQUIPO 2</div>
 
@@ -375,12 +386,12 @@
 
       // PIEZAS
       const allPieces = [
-        { id: 0, svg: '<svg width="150" height="220" viewBox="0 0 150 220"><polygon points="0,0 149.4,0 55.8,216 0,216"/></svg>', w: 150, h: 220 },
-        { id: 1, svg: '<svg width="150" height="220" viewBox="0 0 150 220"><polygon points="0,0 149.4,0 55.8,216 0,216"/></svg>', w: 150, h: 220 },
-        { id: 2, svg: '<svg width="100" height="220" viewBox="0 0 100 220"><rect x="0" y="0" width="96" height="216"/></svg>', w: 100, h: 220 },
-        { id: 3, svg: '<svg width="170" height="75" viewBox="0 0 170 75"><polygon points="0,72 135,72 166.2,0 0,0"/></svg>', w: 170, h: 75 },
-        { id: 4, svg: '<svg width="170" height="75" viewBox="0 0 170 75"><polygon points="0,72 135,72 166.2,0 0,0"/></svg>', w: 170, h: 75 },
-        { id: 5, svg: '<svg width="335" height="75" viewBox="0 0 335 75"><polygon points="0,72 301.2,72 332.4,0 31.2,0"/></svg>', w: 335, h: 75 }
+        { id: 0, svg: '<svg width="249" height="360" viewBox="0 0 249 360"><polygon points="0,0 249,0 93,360 0,360"/></svg>', w: 249, h: 360 },
+        { id: 1, svg: '<svg width="249" height="360" viewBox="0 0 249 360"><polygon points="0,0 249,0 93,360 0,360"/></svg>', w: 249, h: 360 },
+        { id: 2, svg: '<svg width="160" height="360" viewBox="0 0 160 360"><rect x="0" y="0" width="160" height="360"/></svg>', w: 160, h: 360 },
+        { id: 3, svg: '<svg width="277" height="120" viewBox="0 0 277 120"><polygon points="0,0 225,0 277,120 0,120"/></svg>', w: 277, h: 120 },
+        { id: 4, svg: '<svg width="277" height="120" viewBox="0 0 277 120"><polygon points="0,0 225,0 277,120 0,120"/></svg>', w: 277, h: 120 },
+        { id: 5, svg: '<svg width="554" height="120" viewBox="0 0 554 120"><polygon points="0,0 502,0 554,120 52,120"/></svg>', w: 554, h: 120 }
       ];
 
       const numberWords = ['', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis'];
@@ -397,10 +408,11 @@
       const userCount = document.getElementById('userCount');
       const usersList = document.getElementById('usersList');
       const instructionText = document.getElementById('instructionText');
+      const controlButtons = document.getElementById('controlButtons');
       const nextPieceBtn = document.getElementById('nextPieceBtn');
-      const resetBtn = document.getElementById('resetBtn');
-      const topLeftControls = document.getElementById('topLeftControls');
+      const btnReset = document.getElementById('btnReset');
       const btnLeave = document.getElementById('btnLeave');
+      const btnClearRoom = document.getElementById('btnClearRoom');
 
       let isUpdatingFromServer = false;
       let pieces = [];
@@ -426,7 +438,8 @@
       // INIT
       async function init() {
         if (isAngelCaro) {
-          topLeftControls.style.display = 'flex';
+          controlButtons.style.display = 'flex';
+          btnClearRoom.style.display = 'block';
         }
 
         await updatePresence();
@@ -464,8 +477,8 @@
 
       async function initializeGame() {
         const initialPieces = [
-          { piece_index: 1, left: 400, top: 300, angle: 180 },
-          { piece_index: 0, left: 610, top: 300, angle: 0 }
+          { piece_index: 0, left: 200, top: 300, angle: 0 },
+          { piece_index: 1, left: 500, top: 300, angle: 0 }
         ];
 
         await supabase
@@ -611,17 +624,6 @@
       }
 
       function updatePiecesFromServer(piecesData) {
-        // Eliminar piezas que ya no están en el nuevo estado
-        const newIndices = piecesData.map(d => d.piece_index);
-        pieces.forEach(p => {
-          const index = parseInt(p.dataset.index);
-          if (!newIndices.includes(index)) {
-            p.remove();
-          }
-        });
-        pieces = pieces.filter(p => newIndices.includes(parseInt(p.dataset.index)));
-        
-        // Actualizar o crear piezas
         piecesData.forEach(data => {
           const existing = pieces.find(p => parseInt(p.dataset.index) === data.piece_index);
           if (existing) {
@@ -690,36 +692,6 @@
         }
       });
 
-      // Reset button - Vuelve al estado inicial con solo 2 piezas
-      resetBtn.addEventListener('click', async () => {
-        if (!isAngelCaro) return;
-        
-        console.log('Reset clicked - resetting to initial 2 pieces');
-        
-        // Resetear a las 2 piezas iniciales: invertidas y más juntas
-        const initialPieces = [
-          { piece_index: 1, left: 400, top: 300, angle: 180 },
-          { piece_index: 0, left: 610, top: 300, angle: 0 }
-        ];
-        
-        currentPieceCount = 2;
-        
-        const { data, error } = await supabase
-          .from('exercise_state')
-          .upsert({
-            id: 'equipo2_paralelepipedos',
-            piece_count: 2,
-            placed_pieces: initialPieces,
-            updated_at: new Date().toISOString()
-          });
-        
-        if (error) {
-          console.error('ERROR resetting:', error);
-        } else {
-          console.log('Reset successful!');
-        }
-      });
-
       // PRESENCE
       async function updatePresence() {
         await supabase.from('exercise_presence').upsert({
@@ -763,6 +735,73 @@
           .eq('user_id', SESSION_ID);
         
         location.reload();
+      });
+
+      // Clear room button (Angel Caro only)
+      btnClearRoom.addEventListener('click', async () => {
+        if (!isAngelCaro) return;
+        
+        if (!confirm('¿Vaciar la sala? Esto echará a todos los usuarios excepto a ti.')) return;
+        
+        // Get all users except Angel Caro
+        const { data: usersToKick } = await supabase
+          .from('exercise_presence')
+          .select('user_id')
+          .eq('team', 'equipo2')
+          .neq('user_id', SESSION_ID);
+        
+        if (usersToKick && usersToKick.length > 0) {
+          // Create a kick list in a temporary table or use a timestamp
+          const kickTimestamp = Date.now();
+          
+          // Delete all presence except Angel Caro
+          await supabase
+            .from('exercise_presence')
+            .delete()
+            .eq('team', 'equipo2')
+            .neq('user_id', SESSION_ID);
+        }
+        
+        await updateOnlineCount();
+      });
+
+      // Subscribe to presence changes to detect kicks
+      supabase
+        .channel('presence_equipo2')
+        .on('postgres_changes', {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'exercise_presence',
+          filter: `user_id=eq.${SESSION_ID}`
+        }, (payload) => {
+          // If my presence was deleted and I'm not Angel Caro, I was kicked
+          if (!isAngelCaro) {
+            alert('Has sido expulsado de la sala por el profesor.');
+            location.reload();
+          }
+        })
+        .subscribe();
+
+      // Reset button (Angel Caro only)
+      btnReset.addEventListener('click', async () => {
+        if (!isAngelCaro) return;
+        
+        if (!confirm('¿Volver a la posición inicial con 2 piezas?')) return;
+        
+        currentPieceCount = 2;
+        const initialPieces = [
+          { piece_index: 0, left: 200, top: 300, angle: 0 },
+          { piece_index: 1, left: 500, top: 300, angle: 0 }
+        ];
+
+        await supabase
+          .from('exercise_state')
+          .upsert({
+            id: 'equipo2_paralelepipedos',
+            piece_count: 2,
+            placed_pieces: initialPieces,
+            updated_at: new Date().toISOString()
+          });
       });
     })();
   </script>
