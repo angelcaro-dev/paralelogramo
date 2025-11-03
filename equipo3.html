@@ -743,14 +743,44 @@
         
         if (!confirm('¿Vaciar la sala? Esto echará a todos los usuarios excepto a ti.')) return;
         
-        // Delete all presence except Angel Caro
-        await supabase
+        // Get all users except Angel Caro
+        const { data: usersToKick } = await supabase
           .from('exercise_presence')
-          .delete()
+          .select('user_id')
+          .eq('team', 'equipo3')
           .neq('user_id', SESSION_ID);
+        
+        if (usersToKick && usersToKick.length > 0) {
+          // Create a kick list in a temporary table or use a timestamp
+          const kickTimestamp = Date.now();
+          
+          // Delete all presence except Angel Caro
+          await supabase
+            .from('exercise_presence')
+            .delete()
+            .eq('team', 'equipo3')
+            .neq('user_id', SESSION_ID);
+        }
         
         await updateOnlineCount();
       });
+
+      // Subscribe to presence changes to detect kicks
+      supabase
+        .channel('presence_equipo3')
+        .on('postgres_changes', {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'exercise_presence',
+          filter: `user_id=eq.${SESSION_ID}`
+        }, (payload) => {
+          // If my presence was deleted and I'm not Angel Caro, I was kicked
+          if (!isAngelCaro) {
+            alert('Has sido expulsado de la sala por el profesor.');
+            location.reload();
+          }
+        })
+        .subscribe();
 
       // Reset button (Angel Caro only)
       btnReset.addEventListener('click', async () => {
